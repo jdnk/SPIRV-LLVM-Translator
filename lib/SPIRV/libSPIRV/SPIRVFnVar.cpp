@@ -253,9 +253,12 @@ bool specializeFnVariants(SPIRVModule *BM, std::string &ErrMsg) {
               return false;
             }
             if (Res) {
-              // Stop at the first condition operand that evaluates to true
+              if (ITrue.has_value()) {
+                ErrMsg = "Only one conditional of OpConditionalCopyObjectINTEL "
+                         "can be true.";
+                return false;
+              }
               ITrue = IO;
-              break;
             }
           }
           if (!ITrue.has_value()) {

@@ -93,13 +93,11 @@
 ; RUN: llvm-spirv %t_targeted.spv -to-text -o %t_targeted.spt
 ; RUN: FileCheck < %t_targeted.spt %s --check-prefixes=CHECK-SPIRV-COMMON,CHECK-SPIRV-ASM1
 
-; RUN: llvm-spirv -r \
+; RUN: not llvm-spirv -r \
 ; RUN:   --spirv-ext=+SPV_INTEL_function_variants,+SPV_INTEL_inline_assembly \
 ; RUN:   --fnvar-spec-enable \
 ; RUN:   --fnvar-spv-out %t_targeted.spv \
-; RUN:   %t_multitarget.spv -o %t_targeted.bc
-; RUN: llvm-spirv %t_targeted.spv -to-text -o %t_targeted.spt
-; RUN: FileCheck < %t_targeted.spt %s --check-prefixes=CHECK-SPIRV-COMMON,CHECK-SPIRV-ASM1
+; RUN:   %t_multitarget.spv -o %t_targeted.bc 2>&1 | FileCheck %s --check-prefix=CHECK-ERR-COPY
 
 ;;; The following should select the ASM2 variant (FMul)
 ; RUN: llvm-spirv -r \
@@ -148,6 +146,8 @@
 ; CHECK-SPIRV-ASM2: "nop2"
 ; CHECK-SPIRV-ASM2: FMul
 ; CHECK-SPIRV-ASM2: AsmCallINTEL
+
+; CHECK-ERR-COPY: Only one conditional of OpConditionalCopyObjectINTEL can be true.
 
 ;;; Input multi-target SPIR-V module
 119734787 67072 458752 61 0 
