@@ -159,6 +159,14 @@ bool evaluateConstant(SPIRVModule *BM, SPIRVId Id, bool &Res,
   return true;
 }
 
+// Returns whether opcode is allowed to be decorated with ConditionalINTEL
+bool isConditionalAllowed(Op OpCode) {
+  return (OpCode == OpVariable || isTypeOpCode(OpCode) ||
+          OpCode == OpExtInstImport || OpCode == OpExtInst ||
+          isConstantOpCode(OpCode) || OpCode == OpAsmINTEL ||
+          OpCode == OpAsmTargetINTEL);
+}
+
 } // anonymous namespace
 
 namespace SPIRV {
@@ -290,20 +298,26 @@ bool specializeFnVariants(SPIRVModule *BM, std::string &ErrMsg) {
   std::vector<SPIRVId> IdsToRemove;
   for (const auto &D : *Decors) {
     if (D->getDecorateKind() == DecorationConditionalINTEL) {
+      const SPIRVId TargetId = D->getTargetId();
+      if (!isConditionalAllowed(BM->getValue(TargetId)->getOpCode())) {
+        ErrMsg = "Unsupported instruction annotated with ConditionalINTEL";
+        return false;
+      }
+
       const SPIRVId ConstId = static_cast<SPIRVWord>(D->getLiteral(0));
       bool ShouldKeep = false;
       if (!evaluateConstant(BM, ConstId, ShouldKeep, ErrMsg)) {
         return false;
       }
       if (!ShouldKeep) {
-        IdsToRemove.push_back(D->getTargetId());
+        IdsToRemove.push_back(TargetId);
       }
     }
   }
 
   for (const auto &Id : IdsToRemove) {
     if (!BM->eraseReferencesOfInst(Id)) {
-      ErrMsg = "Error removing references of instruction decorated with "
+      ErrMsg = "Error erasing references of instruction decorated with "
                "ConditionalINTEL";
       return false;
     }
@@ -349,19 +363,12 @@ bool specializeFnVariants(SPIRVModule *BM, std::string &ErrMsg) {
         }
       }
       erase_if(*BM->getFuncVec(), [Id](auto F) { return F->getId() == Id; });
-    } else if (Val->getOpCode() == OpVariable ||
-               isTypeOpCode(Val->getOpCode()) ||
-               Val->getOpCode() == OpExtInstImport ||
-               isConstantOpCode(Val->getOpCode()) ||
-               Val->getOpCode() == OpAsmINTEL ||
-               Val->getOpCode() == OpAsmTargetINTEL) {
-      if (!BM->eraseValue(Val)) {
+    } else {
+      bool Success = BM->eraseValue(Val);
+      if (!Success) {
         ErrMsg = "Error erasing value annotated with ConditionalINTEL";
         return false;
       }
-    } else {
-      ErrMsg = "Unsupported instruction annotated with ConditionalINTEL";
-      return false;
     }
   }
 
