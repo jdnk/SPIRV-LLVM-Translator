@@ -168,7 +168,7 @@ void SPIRVDecorate::decode(std::istream &I) {
   default:
     Decoder >> Literals;
   }
-  getOrCreateTarget()->addDecorate(this);
+  getOrCreateTargetEntry()->addDecorate(this);
 }
 
 void SPIRVDecorateId::encode(spv_ostream &O) const {

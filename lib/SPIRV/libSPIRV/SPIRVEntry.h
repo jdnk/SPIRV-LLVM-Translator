@@ -521,6 +521,7 @@ public:
 
   SPIRVId getTargetId() const { return Target; }
   SPIRVForward *getOrCreateTarget() const;
+  SPIRVEntry *getOrCreateTargetEntry() const;
   void setTargetId(SPIRVId T) { Target = T; }
 
 protected:

@@ -1393,6 +1393,11 @@ bool SPIRVModuleImpl::eraseValue(SPIRVValue *V) {
     erase_if(AsmVec, [Id](auto A) { return A->getId() == Id; });
   } else if (OpCode == Op::OpAsmTargetINTEL) {
     erase_if(AsmTargetVec, [Id](auto AT) { return AT->getId() == Id; });
+  } else if (OpCode == Op::OpExtInstImport) {
+    // remove_if(IdToInstSetMap, [Id](auto I) { return I.first == Id; });
+    IdToInstSetMap.erase(Id);
+  } else if (OpCode == Op::OpExtInst) {
+    // ???
   } else {
     return false;
   }

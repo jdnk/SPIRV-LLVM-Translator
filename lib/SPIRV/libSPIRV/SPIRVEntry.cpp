@@ -709,6 +709,14 @@ SPIRVForward *SPIRVAnnotationGeneric::getOrCreateTarget() const {
   return static_cast<SPIRVForward *>(Entry);
 }
 
+SPIRVEntry *SPIRVAnnotationGeneric::getOrCreateTargetEntry() const {
+  SPIRVEntry *Entry = nullptr;
+  bool Found = Module->exist(Target, &Entry);
+  if (!Found)
+    Entry = Module->addForward(Target, nullptr);
+  return static_cast<SPIRVEntry *>(Entry);
+}
+
 SPIRVName::SPIRVName(const SPIRVEntry *TheTarget, const std::string &TheStr)
     : SPIRVAnnotation(OpName, TheTarget, getSizeInWords(TheStr) + 2),
       Str(TheStr) {}
