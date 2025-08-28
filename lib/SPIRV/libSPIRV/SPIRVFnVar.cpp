@@ -164,7 +164,8 @@ bool isConditionalAllowed(Op OpCode) {
   return (OpCode == OpVariable || isTypeOpCode(OpCode) ||
           OpCode == OpExtInstImport || OpCode == OpExtInst ||
           isConstantOpCode(OpCode) || OpCode == OpAsmINTEL ||
-          OpCode == OpAsmTargetINTEL);
+          OpCode == OpAsmTargetINTEL || OpCode == OpFunction ||
+          OpCode == OpFunctionCall);
 }
 
 } // anonymous namespace
@@ -299,8 +300,12 @@ bool specializeFnVariants(SPIRVModule *BM, std::string &ErrMsg) {
   for (const auto &D : *Decors) {
     if (D->getDecorateKind() == DecorationConditionalINTEL) {
       const SPIRVId TargetId = D->getTargetId();
-      if (!isConditionalAllowed(BM->getValue(TargetId)->getOpCode())) {
-        ErrMsg = "Unsupported instruction annotated with ConditionalINTEL";
+      const Op OpCode = BM->getValue(TargetId)->getOpCode();
+      if (!isConditionalAllowed(OpCode)) {
+        std::ostringstream S;
+        S << "Unsupported instruction (opcode: " << OpCode
+          << ") annotated with ConditionalINTEL";
+        ErrMsg = S.str();
         return false;
       }
 
